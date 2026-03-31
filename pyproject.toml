@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cptac-prostate"
+version = "0.1.0"
+description = "Prostate analysis"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Yingwei Hu", email = "yhu39@jhmi.edu" }]
+license = { text = "MIT" }
+
+# 运行所需依赖（最小化）
+dependencies = [
+  "matplotlib>=3.10.1",
+  "seaborn>=0.13.2",
+  "numpy>=1.26.3",
+  "pandas>=2.2.3",
+   "nbformat>=5.10",
+   "venn>=0.1.3"
+]
+
+[project.urls]
+Homepage = "https://example.com"
+Repository = "https://example.com/repo"
+
+[project.scripts]
+gpnb = "cptac_prostate.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = [
+  "tests"
+]
+addopts = "--rootdir=."
