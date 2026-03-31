@@ -13,3 +13,4 @@ Requires-Dist: seaborn>=0.13.2
 Requires-Dist: numpy>=1.26.3
 Requires-Dist: pandas>=2.2.3
 Requires-Dist: nbformat>=5.10
+Requires-Dist: venn>=0.1.3
