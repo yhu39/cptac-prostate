@@ -1,0 +1,9 @@
+Pairwise global_diff exploratory summary
+analysis_method=ModeratedT
+fdr_cutoff=0.05
+log2FC_threshold=0.58
+group_sample_sizes=GG1:5, GG2:24, GG3:31
+outputs:
+- pairwise_summary.tsv: one row per explicit contrast with hit counts and top effect metrics.
+- pairwise_top_effects.tsv: top effect-size rows for each contrast.
+- pairwise_sig_hit_matrix.tsv/png: directional count summary across contrasts.

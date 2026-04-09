@@ -17,6 +17,9 @@ dependencies = [
   "seaborn>=0.13.2",
   "numpy>=1.26.3",
   "pandas>=2.2.3",
+  "scipy>=1.13",
+  "statsmodels>=0.14",
+  "joblib>=1.4",
    "nbformat>=5.10",
    "venn>=0.1.3"
 ]
@@ -27,6 +30,7 @@ Repository = "https://example.com/repo"
 
 [project.scripts]
 gpnb = "cptac_prostate.cli:main"
+prostate = "cptac_prostate.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

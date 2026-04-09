@@ -1,0 +1,8 @@
+group1=GG1
+group2=GG2
+method=ModeratedT
+sample_id_column=common_ID
+n_group1=5
+n_group2=24
+fdr_cutoff=0.05
+fold_change_cutoff=1.4948492486349383

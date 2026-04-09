@@ -1,2 +1,3 @@
 [console_scripts]
 gpnb = cptac_prostate.cli:main
+prostate = cptac_prostate.cli:main
