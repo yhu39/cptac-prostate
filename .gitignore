@@ -6,3 +6,7 @@ tmp_dda_vs_dia_summary_zh.md
 /tmp_phospho_diff_output
 bulk_multiomics_plan_en.md
 bulk_multiomics_plan_zh.md
+/tests/__pycache__
+/tmp_pairwise_out
+/tmp_test_global_two_groups_ml
+/tmp_write_check

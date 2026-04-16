@@ -6,8 +6,17 @@ from pathlib import Path
 
 from cptac_prostate.clean_data import run_clean_data
 from cptac_prostate.clean_meta import run_clean_meta
+from cptac_prostate.boxplot import run_boxplot
 from cptac_prostate.global_diff import run_global_diff
 from cptac_prostate.global_diff_pairwise import run_global_diff_pairwise
+from cptac_prostate.global_phospho_diff_comp import run_global_phospho_diff_comp
+from cptac_prostate.global_two_groups_ml import run_global_two_groups_ml
+from cptac_prostate.grade_progression_hallmark_enrichment import (
+    run_grade_progression_hallmark_enrichment,
+)
+from cptac_prostate.grade_progression_gene_category_analysis import (
+    run_grade_progression_gene_category_analysis,
+)
 from cptac_prostate.global_diff_summary import run_global_diff_summary
 from cptac_prostate.global_sample_match import run_global_sample_match
 from cptac_prostate.global_sample_cv import run_global_sample_cv
@@ -16,6 +25,9 @@ from cptac_prostate.phospho_diff import run_phospho_diff
 from cptac_prostate.phospho_gene_summary import run_phospho_gene_summary
 from cptac_prostate.phospho_diff_summary import run_phospho_diff_summary
 from cptac_prostate.phospho_remove_py import run_phospho_remove_py
+from cptac_prostate.purity_test import run_purity_test
+from cptac_prostate.prerank_gsea import run_prerank_gsea
+from cptac_prostate.two_group_kegg_enrichment import run_two_group_kegg_enrichment
 
 
 DEFAULT_CONFIG_PATH = Path(r"E:\lab\cptac-prostate\runs\20260406_clean_meta\config.ini")
@@ -35,10 +47,12 @@ def load_config(config_path: Path) -> configparser.ConfigParser:
 
 
 def get_task_name(config: configparser.ConfigParser) -> str:
-    if not config.has_section("task") or not config.has_option("task", "name"):
-        msg = "Config file is missing [task] name."
-        raise ValueError(msg)
-    return _strip_quotes(config.get("task", "name"))
+    if config.has_section("task") and config.has_option("task", "name"):
+        return _strip_quotes(config.get("task", "name"))
+    if config.has_section("settings") and config.has_option("settings", "task"):
+        return _strip_quotes(config.get("settings", "task"))
+    msg = "Config file is missing [task] name or [settings] task."
+    raise ValueError(msg)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -82,6 +96,9 @@ def main() -> int:
     elif task_name == "global_diff_pairwise":
         run_global_diff_pairwise(args.config)
         return 0
+    elif task_name == "global_phospho_diff_comp":
+        run_global_phospho_diff_comp(args.config)
+        return 0
     elif task_name == "phospho_diff":
         run_phospho_diff(args.config)
         return 0
@@ -105,6 +122,27 @@ def main() -> int:
         return 0
     elif task_name == "global_sample_cv":
         run_global_sample_cv(args.config)
+        return 0
+    elif task_name in {"global_two_groups_ml", "signature_discovery"}:
+        run_global_two_groups_ml(args.config)
+        return 0
+    elif task_name == "boxplot":
+        run_boxplot(args.config)
+        return 0
+    elif task_name == "purity_test":
+        run_purity_test(args.config)
+        return 0
+    elif task_name == "prerank_gsea":
+        run_prerank_gsea(args.config)
+        return 0
+    elif task_name == "two_group_kegg_enrichment":
+        run_two_group_kegg_enrichment(args.config)
+        return 0
+    elif task_name == "grade_progression_hallmark_enrichment":
+        run_grade_progression_hallmark_enrichment(args.config)
+        return 0
+    elif task_name == "grade_progression_gene_category_analysis":
+        run_grade_progression_gene_category_analysis(args.config)
         return 0
 
     msg = f"Unsupported task in config: {task_name}"

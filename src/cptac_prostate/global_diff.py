@@ -361,6 +361,105 @@ def compare_two_groups(state: DiffState) -> DiffState:
     return state
 
 
+def _annotate_volcano_gene_labels(ax: plt.Axes, plot_frame: pd.DataFrame) -> None:
+    label_frame = plot_frame.loc[
+        plot_frame["Significance"].isin(["S-U", "S-D"]) & plot_frame["Gene"].notna()
+    ].copy()
+    if label_frame.empty:
+        return
+
+    label_frame["neglog10_fdr"] = -np.log10(
+        pd.to_numeric(label_frame["FDR"], errors="coerce").clip(lower=np.finfo(float).tiny)
+    )
+    label_frame = label_frame.dropna(subset=["Log2FC(median)", "neglog10_fdr", "Gene"])
+    if label_frame.empty:
+        return
+
+    top_up = (
+        label_frame.loc[label_frame["Significance"] == "S-U"]
+        .sort_values("Log2FC(median)", ascending=False)
+        .head(20)
+    )
+    top_down = (
+        label_frame.loc[label_frame["Significance"] == "S-D"]
+        .sort_values("Log2FC(median)", ascending=True)
+        .head(20)
+    )
+    label_frame = pd.concat([top_up, top_down], axis=0, ignore_index=True)
+    if label_frame.empty:
+        return
+
+    ylim = ax.get_ylim()
+    y_span = max(ylim[1] - ylim[0], 1.0)
+    xlim = ax.get_xlim()
+    x_span = max(xlim[1] - xlim[0], 1.0)
+    y_step = 0.035 * y_span
+    x_step = 0.12 * x_span
+    y_low = ylim[0] + 0.03 * y_span
+    y_high = ylim[1] - 0.03 * y_span
+
+    min_gap = 0.035 * y_span
+
+    def _spread_positions(side_frame: pd.DataFrame) -> pd.DataFrame:
+        if side_frame.empty:
+            return side_frame
+        placed = side_frame.sort_values("neglog10_fdr", ascending=False).copy()
+        targets = placed["neglog10_fdr"].to_numpy(dtype=float).copy()
+        targets = np.clip(targets, y_low, y_high)
+        for idx in range(1, len(targets)):
+            if targets[idx - 1] - targets[idx] < min_gap:
+                targets[idx] = targets[idx - 1] - min_gap
+        if len(targets) and targets[-1] < y_low:
+            shift = y_low - targets[-1]
+            targets = targets + shift
+        if len(targets) and targets[0] > y_high:
+            shift = targets[0] - y_high
+            targets = targets - shift
+        for idx in range(len(targets) - 2, -1, -1):
+            if targets[idx] - targets[idx + 1] < min_gap:
+                targets[idx] = min(y_high, targets[idx + 1] + min_gap)
+        placed["y_text"] = np.clip(targets, y_low, y_high)
+        return placed
+
+    top_up = _spread_positions(
+        label_frame.loc[label_frame["Significance"] == "S-U"].copy()
+    )
+    top_down = _spread_positions(
+        label_frame.loc[label_frame["Significance"] == "S-D"].copy()
+    )
+
+    for placed_frame, direction in [(top_up, 1), (top_down, -1)]:
+        for _, row in placed_frame.iterrows():
+            x_value = float(row["Log2FC(median)"])
+            y_value = float(row["neglog10_fdr"])
+            x_text = x_value + direction * x_step
+            ax.annotate(
+                str(row["Gene"]),
+                xy=(x_value, y_value),
+                xytext=(x_text, float(row["y_text"])),
+                textcoords="data",
+                fontsize=7.0,
+                ha="left" if direction > 0 else "right",
+                va="center",
+                color="#222222",
+                bbox={
+                    "boxstyle": "round,pad=0.12",
+                    "facecolor": "white",
+                    "edgecolor": "none",
+                    "alpha": 0.85,
+                },
+                arrowprops={
+                    "arrowstyle": "-",
+                    "color": "#999999",
+                    "lw": 0.7,
+                    "linestyle": "--",
+                    "alpha": 0.65,
+                    "shrinkA": 6,
+                    "shrinkB": 2,
+                },
+            )
+
+
 def plot_volcano(state: DiffState) -> DiffState:
     if state.diff is None:
         msg = "Differential results are not available."
@@ -376,6 +475,8 @@ def plot_volcano(state: DiffState) -> DiffState:
         log2fc_threshold=state.cfg.log2fc_cutoff,
         xlim=(-xlimit, xlimit),
     )
+    if fig.axes:
+        _annotate_volcano_gene_labels(fig.axes[0], plot_frame)
     fig.savefig(
         state.cfg.output_dir / f"{state.cfg.prefix}_volcano.png",
         dpi=300,
