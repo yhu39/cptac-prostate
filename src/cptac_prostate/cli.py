@@ -26,6 +26,8 @@ from cptac_prostate.phospho_gene_summary import run_phospho_gene_summary
 from cptac_prostate.phospho_diff_summary import run_phospho_diff_summary
 from cptac_prostate.phospho_remove_py import run_phospho_remove_py
 from cptac_prostate.purity_test import run_purity_test
+from cptac_prostate.purity_validation import run_purity_validation
+from cptac_prostate.pathway_purity_validation import run_pathway_purity_validation
 from cptac_prostate.prerank_gsea import run_prerank_gsea
 from cptac_prostate.two_group_kegg_enrichment import run_two_group_kegg_enrichment
 
@@ -131,6 +133,12 @@ def main() -> int:
         return 0
     elif task_name == "purity_test":
         run_purity_test(args.config)
+        return 0
+    elif task_name == "purity_validation":
+        run_purity_validation(args.config)
+        return 0
+    elif task_name == "pathway_purity_validation":
+        run_pathway_purity_validation(args.config)
         return 0
     elif task_name == "prerank_gsea":
         run_prerank_gsea(args.config)

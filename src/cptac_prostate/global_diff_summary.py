@@ -209,7 +209,7 @@ def _compute_grade_progression_metrics(state: DiffSummaryState) -> dict[str, obj
                 "pair": f"{left}-{right}",
                 "intersection": len(intersection),
                 "union": len(union),
-                "jaccard": len(intersection) / len(union),
+                "jaccard": (len(intersection) / len(union)) if union else 0.0,
             }
         )
     pairwise_jaccard = sorted(pairwise_jaccard, key=lambda item: item["jaccard"], reverse=True)
@@ -226,12 +226,15 @@ def _compute_grade_progression_metrics(state: DiffSummaryState) -> dict[str, obj
     }
 
     union_genes = sorted(set.union(*grade_sets.values()))
-    trend_frame = (
-        heatmap_table[heatmap_table["gene"].isin(union_genes)]
-        .groupby("gene")[["normal", "GG1", "GG2", "GG3", "GG4", "GG5", "tumor"]]
-        .median()
-        .reset_index()
-    )
+    if not union_genes or heatmap_table.empty or "gene" not in heatmap_table.columns:
+        trend_frame = pd.DataFrame(columns=["gene", "normal", "GG1", "GG2", "GG3", "GG4", "GG5", "tumor"])
+    else:
+        trend_frame = (
+            heatmap_table[heatmap_table["gene"].isin(union_genes)]
+            .groupby("gene")[["normal", "GG1", "GG2", "GG3", "GG4", "GG5", "tumor"]]
+            .median()
+            .reset_index()
+        )
 
     trend_records: list[dict[str, object]] = []
     for _, row in trend_frame.iterrows():
@@ -251,7 +254,19 @@ def _compute_grade_progression_metrics(state: DiffSummaryState) -> dict[str, obj
                 "monotonic_down": g2 >= g3 >= g4 >= g5,
             }
         )
-    trend_df = pd.DataFrame(trend_records)
+    trend_df = pd.DataFrame(
+        trend_records,
+        columns=[
+            "gene",
+            "GG2",
+            "GG3",
+            "GG4",
+            "GG5",
+            "delta_G5_G2",
+            "monotonic_up",
+            "monotonic_down",
+        ],
+    )
     top_increasing = trend_df.sort_values("delta_G5_G2", ascending=False).head(8)
     top_decreasing = trend_df.sort_values("delta_G5_G2", ascending=True).head(8)
     monotonic_up = sorted(trend_df.loc[trend_df["monotonic_up"], "gene"].tolist())
@@ -332,13 +347,24 @@ def venn_diagram(state: DiffSummaryState) -> DiffSummaryState:
 
     venn_sets = {f"{name} vs normal": genes for name, genes in gene_sets.items()}
     fig, ax = plt.subplots(figsize=(12, 10))
-    venn(
-        venn_sets,
-        ax=ax,
-        figsize=(12, 10),
-        fontsize=12,
-        legend_loc="upper right",
-    )
+    if any(venn_sets.values()):
+        venn(
+            venn_sets,
+            ax=ax,
+            figsize=(12, 10),
+            fontsize=12,
+            legend_loc="upper right",
+        )
+    else:
+        ax.axis("off")
+        ax.text(
+            0.5,
+            0.5,
+            "No up-regulated proteins were detected for the configured groups.",
+            ha="center",
+            va="center",
+            fontsize=14,
+        )
     ax.set_title("UP-regulated Proteins in Different Groups vs Normal")
     fig.tight_layout()
     fig.savefig(output_dir / "global_diff_summary_venn.png", dpi=300, bbox_inches="tight")
@@ -362,8 +388,12 @@ def venn_diagram(state: DiffSummaryState) -> DiffSummaryState:
                 }
             )
 
-    overlap_table = pd.DataFrame(results).sort_values(["n_sets", "combination"]).reset_index(drop=True)
-    overlap_table["elements"] = overlap_table["elements"].apply(lambda values: ";".join(values))
+    overlap_table = pd.DataFrame(results)
+    if overlap_table.empty:
+        overlap_table = pd.DataFrame(columns=["combination", "n_sets", "count", "elements"])
+    else:
+        overlap_table = overlap_table.sort_values(["n_sets", "combination"]).reset_index(drop=True)
+        overlap_table["elements"] = overlap_table["elements"].apply(lambda values: ";".join(values))
     overlap_table.to_csv(output_dir / "global_diff_summary_overlap.tsv", sep="\t", index=False)
 
     state.gene_sets = gene_sets

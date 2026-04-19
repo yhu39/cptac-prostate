@@ -10,3 +10,15 @@ bulk_multiomics_plan_zh.md
 /tmp_pairwise_out
 /tmp_test_global_two_groups_ml
 /tmp_write_check
+/tmp_20260416_global_msfragger_normalized_tumor_purity_corrected
+/tmp_pathway_purity_validation_test
+/tmp_purity_validation_real_output
+/tmp_purity_validation_test
+tmp_pathway_purity_validation.ini
+tmp_pathway_purity_validation_ssgsea.ini
+tmp_purity_validation_export.ini
+tmp_purity_validation_export_sufficient.ini
+tmp_purity_validation_mode1.ini
+tmp_purity_validation_mode2.ini
+tmp_purity_validation_mode3.ini
+tmp_purity_validation_real.ini
